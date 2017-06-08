@@ -1,0 +1,64 @@
+unction Wait-ForService {
+  <#
+  .SYNOPSIS
+      Waits for a Service to reached a desired state.
+
+  .DESCRIPTION
+      Will
+
+  .PARAMETER ComputerName
+      Remote or local computer
+
+  .PARAMETER ServiceName
+      Takes the Displayname of a service.
+
+  .PARAMETER Status
+      Takes the Displayname of a service.
+
+  .NOTES
+      Author: Hugh Macpherson
+      Version: 1.0
+
+
+  .EXAMPLE
+      Wait-ForService -ComputerName localhost -ServiceName Telephony -Status running
+
+      Wait-ForService -ComputerName localhost -ServiceName Telephony -Status stopped
+
+      Wait-ForService -ComputerName localhost -ServiceName Telephony -Status sopped -verbose
+      VERBOSE: Waiting for the service to reach the status of stopped or a maximum of 10 minutes
+
+  #>
+
+  [CmdletBinding()]
+  param(
+          [parameter(Mandatory=$True,
+                     ValueFromPipeline=$True,
+                     ValueFromPipelineByPropertyName=$True,
+                     HelpMessage="The Computer Name")]
+          [alias('DNSHostName','hostname','cn')]
+          [string[]]$Computername=$env:COMPUTERNAME,
+          [parameter(Mandatory=$True,
+                     ValueFromPipeline=$True,
+                     ValueFromPipelineByPropertyName=$True,
+                     HelpMessage="The Service Name")]
+          [alias('DisplayName')]
+          [string[]]$ServiceName,
+          [parameter(Mandatory=$True,
+                     ValueFromPipeline=$True,
+                     ValueFromPipelineByPropertyName=$True,
+                     HelpMessage="The Status of the Service")]
+          [string[]]$Status
+      )
+
+      # Get all Computers where DisplayName matches $searchString and loop through each of them.
+      TRY {
+          foreach ($Computer in $ComputerName) {
+              $service = Get-Service -Computer $Computer -DisplayName $ServiceName
+              Write-Verbose "Waiting for the service to reach the status of $status or a maximum of 10 minutes"
+              $service.WaitForStatus($status, '00:10:00') } # Foreach
+          } # TRY
+      CATCH { Write-Verbose "Time out has expired and the operation has not been completed."
+            } # CATCH
+
+}
