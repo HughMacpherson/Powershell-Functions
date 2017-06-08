@@ -1,0 +1,30 @@
+Function Get-ADWinOSCount {
+  <#
+  .SYNOPSIS
+      Get all Windows Opersting systems in an Active Directory Forest and displays a count of each.
+
+  .DESCRIPTION
+      Get all Windows Opersting systems in an Active Directory Forest and displays a count of each.
+      - Assumes the Microsoft Active Directory Module is installed.
+
+  .EXAMPLE
+      PS:> get-ADWinOSCount
+
+      Count            Name
+      --------        -------
+      461             Windows 7
+      22              Windows Server 2008 R2
+      9              Windows Server 2012 R2
+      5               Windows Server 2016
+
+  .EXAMPLE
+      PS:> $WinOSCount = get-ADWinOSCount
+
+  .LINK
+      https://github.com/HughMacpherson
+
+  #>
+
+  $Computers = Foreach ($Domain in $Forest.Domains) { Get-ADComputer -filter {(OperatingSystem -Like "*Windows*") -And (Enabled -eq "True") -And (PasswordLastSet -gt ((Get-Date).AddDays(-60)))} -Server (Get-ADForest) -Properties * }
+  $Computers | Group-Object operatingsystem | select Count,Name | Sort Name
+} #Function
