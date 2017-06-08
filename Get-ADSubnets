@@ -1,0 +1,36 @@
+Function Get-ADSubnets {
+  <#
+  .SYNOPSIS
+      Get all Active Directory Subnets from the forest.
+
+  .DESCRIPTION
+      Get all Active Directory Subnets from Sites and Services.
+      - Assumes the Microsoft Active Directory Module is installed.
+
+  .EXAMPLE
+      PS:> get-ADSubnets
+
+      Site            Subnet
+      --------        -------
+      Glasgow         10.21.54.0/24
+      Edinburgh       10.21.44.0/24
+      Aberdeen        10.21.34.0/24
+
+  .EXAMPLE
+      PS:> $Subnets = get-ADSubnets
+
+  .LINK
+      https://github.com/HughMacpherson
+
+  #>
+    $Sites = [System.DirectoryServices.ActiveDirectory.Forest]::GetCurrentForest().Sites
+        ForEach ($Site in $Sites) {
+            ForEach ($Subnet in $Site.subnets) {
+                $Properties  = [ordered] @{
+                                'Site' = $site.Name
+                                'Subnet' = $Subnet.Name}
+                $obj = New-Object PSCustomObject -Property $Properties
+                Write-Output $obj
+                } #ForEach
+        } #ForEach
+} #Function
