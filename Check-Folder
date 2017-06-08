@@ -1,0 +1,71 @@
+Function Check-Folder {
+  <#
+  .Synopsis
+  Checks if the specified Folder Exists. If the -Create parameter is on it will create the folder if it does not exist.
+
+  .NOTES
+  Name       : Check-Folder
+  Author     : Hugh Macpherson
+  Version    : 1.2
+  DateCreated: 2016-11-13
+  DateUpdated: 2016-11-28
+
+  .PARAMETER Path
+  The Path of the Folder to be checked if it exists
+
+  .PARAMETER Create
+  If the folder does not exist this Switch will creat it
+
+  .EXAMPLE
+  Check-Folder -Path '.\Backup'
+  Check-Folder : Folder D:\Test10 does not exist
+  At line:1 char:1
+  + Check-Folder .\Backup
+  + ~~~~~~~~~~~~~~~~~~~~~~
+      + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+      + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,Check-Folder
+
+
+  .EXAMPLE
+  Check-Folder -Path '.\Backup','.\Restore' -Verbose
+  VERBOSE: Folder Exists
+  VERBOSE: Folder Exists
+
+
+  .EXAMPLE
+  Check-Folder -Path $BackupPath,$RestorePath,D:\logs -Create -Verbose
+  VERBOSE: Folder Exists
+  VERBOSE: Folder Exists
+  WARNING: Folder D:\logs does not exist: Creating Folder D:\logs
+
+  Description:
+  With the -Create Switch the folder will be created if it is missing
+  #>
+
+
+  [CmdletBinding()]
+  param(
+              [parameter(Mandatory=$True,
+                         ValueFromPipeline=$True,
+                         ValueFromPipelineByPropertyName=$True,
+                         HelpMessage="The Folder location")]
+          [string[]]$Path,
+          [switch]$Create
+  ) #Closes Param
+
+
+      ForEach ($Directory in $Path) {
+          If ((Test-path $Directory) -eq $false) {
+                  IF ($Create -eq $True) {
+                      Write-Warning "The Folder $Directory does not exist: Creating Folder"
+                      New-Item -Type Directory -Path $Directory | OUt-Null
+                  } # IF $Create
+                  ELSE {
+                      Write-Error "The Folder $Directory does not exist"
+                  } # ELSE Write Error
+          } # IF Test-path
+          ELSE {
+              Write-Verbose 'Folder Exists'
+          } # ESLE Folder Exists
+      } # ForEach $Directory
+} # Function Check-Folder
