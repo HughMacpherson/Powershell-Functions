@@ -1,0 +1,51 @@
+Function Check-Service {
+  <#
+  .SYNOPSIS
+      Updates the local or a remote computers DESCRIPTION in System Properties.
+
+  .DESCRIPTION
+      Updates the local or a remote computers DESCRIPTION in System Properties.
+
+  .EXAMPLE
+      PS:\> Check-Service  -ComputerName $ComputerName -ServiceName $ServiceName
+
+  .LINK
+      http://github.com/HughMacpherson
+  #>
+
+	[CmdletBinding()]
+	    param (
+      [Parameter(Mandatory=$false,
+                 Position=0,
+                 ValueFromPipeline=$true,
+                 ValueFromPipelineByPropertyName=$true,
+                 HelpMessage="The Computer Name")]
+      [alias('DNSHostName','hostname','cn','Server','ServerName')]
+      [string[]]$ComputerName=$env:COMPUTERNAME,
+			[Parameter(Mandatory=$false,
+                Position=0,
+                ValueFromPipeline=$true,
+                ValueFromPipelineByPropertyName=$true,
+                HelpMessage="The Service Name")]
+			[alias('Name','service')]
+			[string[]]$ServiceName='*'
+    ) #Closes Param
+
+		ForEach ($Computer in $ComputerName) {
+		    TRY {
+		         $Service = Get-Service -ComputerName $Computer -Name $ServiceName -ErrorAction SilentlyContinue
+
+		         $properties = [Ordered]@{
+		                        ComputerName = $computer
+		                        Status = $Service.Status
+		                        Name = $service.name
+		                        DisplayName = $service.DisplayName}
+
+		    } CATCH {
+		             Write-Warning "Service not Found"
+		    } FINALLY {
+		        $obj = New-Object -TypeName psobject -Property $properties
+		        Write-Output $obj
+		    } #Finally
+		} #ForEach
+} #Function
