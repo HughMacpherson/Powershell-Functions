@@ -1,0 +1,25 @@
+Function get-AllADWinClients {
+  <#
+  .SYNOPSIS
+      Get all Windows Clients in an Active Directory Forest by looking through all domains in a forest.
+
+  .DESCRIPTION
+      Get all Windows Clients in an Active Directory Forest by looking through all domains in a forest.
+      - Assumes the Microsoft Active Directory Module is installed.
+
+  .EXAMPLE
+      PS:> get-AllADWinClients
+
+  .EXAMPLE
+      PS:> $Computers = get-AllADWinClients
+
+  .LINK
+      https://github.com/HughMacpherson
+
+  #>
+
+  $Date = (Get-Date).AddDays(-60)
+  $Forest = Get-ADForest
+  $Computers = Foreach ($Domain in $Forest.Domains) {Get-ADComputer -filter {(OperatingSystem -NotLike "*Server*") -And (OperatingSystem -Like "*Windows*") -And (Enabled -eq "True") -And (PasswordLastSet -gt $date)} -Server $Domain -Properties * }
+  $Computers | Sort
+} #Function
