@@ -1,0 +1,80 @@
+Function Check-Dependancy {
+  <#
+  .Synopsis
+  Checks if the specified Folder Exists. If the -Create parameter is on it will create the folder if it does not exist.
+
+  .NOTES
+  Name       : Check-Dependancies
+  Author     : Hugh Macpherson
+  Version    : 1.2
+  DateCreated: 2016-11-13
+  DateUpdated: 2016-11-28
+
+  .PARAMETER Path
+  The Path of the Folder to be checked if it exists
+
+  .PARAMETER Create
+  If the folder does not exist this Switch will creat it
+
+  .EXAMPLE
+  Check-Dependancies -Path '.\Backup'
+  Check-Dependancies : Folder D:\Test10 does not exist
+  At line:1 char:1
+  + Check-Dependancies .\Backup
+  + ~~~~~~~~~~~~~~~~~~~~~~
+      + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+      + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,Check-Dependancies
+
+
+  .EXAMPLE
+  Check-Dependancies -Path '.\Backup','.\Restore' -Verbose
+  VERBOSE: Dependancy Exists
+  VERBOSE: Dependancy Exists
+
+
+  .EXAMPLE
+  Check-Dependancies -Path $BackupPath,$RestorePath,D:\logs -Create -Verbose
+  VERBOSE: Dependancy Exists
+  VERBOSE: Dependancy Exists
+  WARNING: Dependancy D:\logs does not exist: Creating Folder D:\logs
+
+  Description:
+  With the -Create Switch the folder will be created if it is missing
+  #>
+
+
+  [CmdletBinding()]
+  param(
+              [parameter(Mandatory=$True,
+                         ValueFromPipeline=$True,
+                         ValueFromPipelineByPropertyName=$True,
+                         HelpMessage="The Dependancy location")]
+          [string[]]$Path,
+          [parameter(Mandatory=$True,
+                         ValueFromPipeline=$True,
+                         ValueFromPipelineByPropertyName=$True,
+                         HelpMessage="The Dependancy File")]
+          [string[]]$Dependancy,
+          [string]$Restore
+  ) #Closes Param
+
+
+      ForEach ($file in $Dependancy) {
+  		$deppath = "$Path\$file"
+          If ((Test-path $deppath) -eq $false) {
+                  #IF ($Restore -ne 'null') {
+                      #Write-Warning "The Dependancy $Dependancy does not exist in $Path : Restoring Dependancy"
+                      #New-Item -Type Directory -Path $Dependancy | OUt-Null
+                  #} # IF $Create
+                  #ELSE {
+                      #Write-Error "The Dependancy $Dependancy does not exist"
+                      #$quitline += "$file missing from $Path"
+                      Write-Error "$file missing from $Path"
+  					exit
+                  #} # ELSE Write Error
+          } # IF Test-path
+          ELSE {
+              Write-Verbose "Dependancy $file Exists in $Path"
+          } # ESLE Folder Exists
+      } # ForEach $Directory
+} # Function Check-Dependancies
