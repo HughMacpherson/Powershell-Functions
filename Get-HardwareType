@@ -1,0 +1,109 @@
+Function Get-HardwareType {
+<#
+.SYNOPSIS
+    Checks if a Machine is Virtual or Physical and If Virtual will attempt to Identify the Hypervisor
+
+.DESCRIPTION
+    Checks if a Machine is Virtual or Physical and If Virtual will attempt to Identify the Hypervisor
+
+.PARAMETER ComputerName
+    One or more computers, if no computer name is provided it will use the LocalMachine
+
+.EXAMPLE
+    Get-HardwareType -ComputerName $Computer
+
+.LINK
+    http://github.com/hughmacpherson
+
+#>
+
+    param (
+        [Parameter(
+            Position = 0,
+            ValueFromPipeline=$true,
+            ValueFromPipelineByPropertyName=$true,
+            ValueFromRemainingArguments=$false)]
+        [ValidateNotNullOrEmpty()]
+        [Alias('CN','__SERVER','Server','Computer')]
+        [string[]]$ComputerName = $env:computername)
+
+    begin {
+          ForEach ($Computer in $ComputerName) {
+            TRY {
+                $WMIComputerSystem = get-wmiobject -class win32_ComputerSystem -ComputerName $Computer -ErrorAction Stop
+                $WMIBasBoard = get-wmiobject -class win32_BaseBoard -ComputerName $Computer -ErrorAction Stop
+                $WMIBIOS = get-wmiobject -class win32_BIOS -ComputerName $Computer -ErrorAction Stop
+            }
+            CATCH {
+                    $Properties = @{ComputerName = $Computer
+                                    HypervisorVendor = $null
+                                    HypervisorModel = $null
+                                    HardwareType = $null
+                                    Serialnumber = $null
+                            }
+            }
+            FINALLY {
+                IF ($WMIBasBoard.Manufacturer -like "*Microsoft*") {
+                    $HypervisorVendor = "Microsoft"
+                    $HardwareType = "Virtual"
+                        IF ($WMIBIOS.version -like "*VRTUAL â€ 1000831*") {
+                            $HypervisorModel = "Hyper-V 2008 Beta or RC0"
+                        }
+                        IF (($WMIBIOS.version -like "*VRTUAL â€ 5000805*") -or ($WMIBIOS.version -like "BIOS Date: 05/05/08 20:35:56  Ver: 08.00.02")) {
+                            $HypervisorModel = "Hyper-V 2008 RTM"
+                        }
+                        IF ($WMIBIOS.version -like "*VRTUAL â€ 3000919*") {
+                            $HypervisorModel = "Hyper-V 2008 R2"
+                        }
+                        IF ($WMIBIOS.version -like "*A M I  â€ 2000622*") {
+                            $HypervisorModel = "VS2005R2SP1 or VPC2007"
+                        }
+                        IF ($WMIBIOS.version -like "*A M I  â€ 9000520*") {
+                            $HypervisorModel = "VS2005R2"
+                        }
+                        IF (($WMIBIOS.version -like "*A M I  â€ 9000816*") -or ($WMIBIOS.version -like "A M I  â€ 6000901*")) {
+                            $HypervisorModel = "Windows Virtual PC"
+                        }
+                        IF ($WMIBIOS.version -like "*A M I  â€ 8000314*") {
+                            $HypervisorModel = "VS2005 or VPC2004"
+                        }
+                        ELSE {
+                            $HypervisorModel = "Undetected"
+                        }
+                }
+                IF (($WMIBasBoard.Manufacturer -like "*Oracle*") -And ($WMIComputerSystem.Model -like "*VirtualBox*")) {
+                    $HypervisorVendor = "Oracle"
+                    $HardwareType = "Virtual"
+                }
+                IF ($WMIBasBoard.Manufacturer -like "*Red Hat*") {
+                    $HypervisorVendor = "Red Hat"
+                    $HardwareType = "Virtual"
+                }
+                IF ($WMIBIOS.Manufacturer -like "*XEN*") {
+                    $HypervisorVendor = "Citrix"
+                    $HardwareType = "Virtual"
+                }
+                IF ($WMIBIOS.Serialnumber -like "*VMW*") {
+                    $HypervisorVendor = "VMWare"
+                    $HardwareType = "Virtual"
+                }
+                ELSE {
+                    $HypervisorVendor = ""
+                    $HardwareType = "Physical"
+                }
+                $Properties = @{ComputerName = $Computer
+                              HypervisorVendor = $HypervisorVendor
+                              HypervisorModel = $HypervisorModel
+                              HardwareType = $HardwareType
+                              Serialnumber = $WMIBIOS.Serialnumber
+                            }
+                $obj = New-Object PSOBject -Property $Properties
+                Write-Output $obj
+
+
+              } #FINALLY
+            } #ForEach $Computer
+    } #Begin
+    process { } #Process
+    End { } #End
+} #Function
